@@ -11,6 +11,7 @@
     .entry { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
     .lang-switch { text-align: right; margin-bottom: 10px; }
     button { margin-top: 10px; }
+    .error { color: red; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -37,6 +38,7 @@
     <label id="notesLabel">感想／备注:</label>
     <textarea id="notes" rows="4"></textarea>
 
+    <div class="error" id="errorMsg"></div>
     <button type="submit" id="saveButton">保存日志</button>
   </form>
 
@@ -53,7 +55,8 @@
         grade: "难度:",
         notes: "感想／备注:",
         save: "保存日志",
-        logHeader: "已保存的日志："
+        logHeader: "已保存的日志：",
+        error: "请填写所有必填字段。"
       },
       ja: {
         title: "クライミング日誌",
@@ -63,7 +66,8 @@
         grade: "グレード:",
         notes: "感想／メモ:",
         save: "日誌を保存",
-        logHeader: "保存された日誌："
+        logHeader: "保存された日誌：",
+        error: "すべての必須項目を入力してください。"
       }
     };
 
@@ -80,41 +84,61 @@
       document.getElementById("notesLabel").textContent = t.notes;
       document.getElementById("saveButton").textContent = t.save;
       document.getElementById("logHeader").textContent = t.logHeader;
+      document.getElementById("errorMsg").textContent = "";
     }
 
     document.getElementById("logForm").addEventListener("submit", function(e) {
       e.preventDefault();
-      const entry = {
-        date: document.getElementById("date").value,
-        place: document.getElementById("place").value,
-        route: document.getElementById("route").value,
-        grade: document.getElementById("grade").value,
-        notes: document.getElementById("notes").value
-      };
+
+      const date = document.getElementById("date").value;
+      const place = document.getElementById("place").value.trim();
+      const route = document.getElementById("route").value.trim();
+      const grade = document.getElementById("grade").value.trim();
+      const notes = document.getElementById("notes").value.trim();
+
+      if (!date || !place || !route || !grade) {
+        document.getElementById("errorMsg").textContent = texts[currentLang].error;
+        return;
+      }
+
+      const entry = { date, place, route, grade, notes };
 
       let logs = JSON.parse(localStorage.getItem("climbLogs") || "[]");
       logs.push(entry);
       localStorage.setItem("climbLogs", JSON.stringify(logs));
       showLogs();
       this.reset();
+      document.getElementById("errorMsg").textContent = "";
     });
 
     function showLogs() {
       const logs = JSON.parse(localStorage.getItem("climbLogs") || "[]");
       const container = document.getElementById("logEntries");
       container.innerHTML = "";
-      logs.reverse().forEach(log => {
+
+      logs.slice().reverse().forEach((log, index) => {
+        const realIndex = logs.length - 1 - index;
         const div = document.createElement("div");
         div.className = "entry";
-        div.innerHTML = `<strong>${log.date}</strong><br>
-                         📍 ${log.place}<br>
-                         🧗 ${log.route} (${log.grade})<br>
-                         ✍️ ${log.notes}`;
+        div.innerHTML = `
+          <strong>${log.date}</strong><br>
+          📍 ${log.place}<br>
+          🧗 ${log.route} (${log.grade})<br>
+          ✍️ ${log.notes}<br>
+          <button onclick="deleteLog(${realIndex})">🗑 删除</button>
+        `;
         container.appendChild(div);
       });
     }
 
-    // 初始显示
+    function deleteLog(index) {
+      let logs = JSON.parse(localStorage.getItem("climbLogs") || "[]");
+      logs.splice(index, 1);
+      localStorage.setItem("climbLogs", JSON.stringify(logs));
+      showLogs();
+    }
+
+    // 初始化
     setLanguage("zh");
     showLogs();
   </script>
