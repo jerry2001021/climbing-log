@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>攀岩日志 / クライミング日誌</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    h1 { text-align: center; }
+    label { display: block; margin-top: 10px; }
+    textarea, input { width: 100%; padding: 5px; }
+    .entry { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
+    .lang-switch { text-align: right; margin-bottom: 10px; }
+    button { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="lang-switch">
+    <button onclick="setLanguage('zh')">中文</button>
+    <button onclick="setLanguage('ja')">日本語</button>
+  </div>
+
+  <h1 id="title">攀岩日志</h1>
+
+  <form id="logForm">
+    <label id="dateLabel">日期:</label>
+    <input type="date" id="date" required>
+
+    <label id="placeLabel">地点:</label>
+    <input type="text" id="place" required>
+
+    <label id="routeLabel">路线名称:</label>
+    <input type="text" id="route" required>
+
+    <label id="gradeLabel">难度:</label>
+    <input type="text" id="grade" required>
+
+    <label id="notesLabel">感想／备注:</label>
+    <textarea id="notes" rows="4"></textarea>
+
+    <button type="submit" id="saveButton">保存日志</button>
+  </form>
+
+  <h2 id="logHeader">已保存的日志：</h2>
+  <div id="logEntries"></div>
+
+  <script>
+    const texts = {
+      zh: {
+        title: "攀岩日志",
+        date: "日期:",
+        place: "地点:",
+        route: "路线名称:",
+        grade: "难度:",
+        notes: "感想／备注:",
+        save: "保存日志",
+        logHeader: "已保存的日志："
+      },
+      ja: {
+        title: "クライミング日誌",
+        date: "日付:",
+        place: "場所:",
+        route: "ルート名:",
+        grade: "グレード:",
+        notes: "感想／メモ:",
+        save: "日誌を保存",
+        logHeader: "保存された日誌："
+      }
+    };
+
+    let currentLang = "zh";
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      const t = texts[lang];
+      document.getElementById("title").textContent = t.title;
+      document.getElementById("dateLabel").textContent = t.date;
+      document.getElementById("placeLabel").textContent = t.place;
+      document.getElementById("routeLabel").textContent = t.route;
+      document.getElementById("gradeLabel").textContent = t.grade;
+      document.getElementById("notesLabel").textContent = t.notes;
+      document.getElementById("saveButton").textContent = t.save;
+      document.getElementById("logHeader").textContent = t.logHeader;
+    }
+
+    document.getElementById("logForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const entry = {
+        date: document.getElementById("date").value,
+        place: document.getElementById("place").value,
+        route: document.getElementById("route").value,
+        grade: document.getElementById("grade").value,
+        notes: document.getElementById("notes").value
+      };
+
+      let logs = JSON.parse(localStorage.getItem("climbLogs") || "[]");
+      logs.push(entry);
+      localStorage.setItem("climbLogs", JSON.stringify(logs));
+      showLogs();
+      this.reset();
+    });
+
+    function showLogs() {
+      const logs = JSON.parse(localStorage.getItem("climbLogs") || "[]");
+      const container = document.getElementById("logEntries");
+      container.innerHTML = "";
+      logs.reverse().forEach(log => {
+        const div = document.createElement("div");
+        div.className = "entry";
+        div.innerHTML = `<strong>${log.date}</strong><br>
+                         📍 ${log.place}<br>
+                         🧗 ${log.route} (${log.grade})<br>
+                         ✍️ ${log.notes}`;
+        container.appendChild(div);
+      });
+    }
+
+    // 初始显示
+    setLanguage("zh");
+    showLogs();
+  </script>
+</body>
+</html>
